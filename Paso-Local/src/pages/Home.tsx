@@ -1,130 +1,123 @@
 import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Link } from 'react-router-dom';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import comerciosData from '../data/comercios.demo.json';
 
-// Ícono personalizado para evitar problemas de rutas de imágenes en Vite
+import { MODALIDADES, colorModalidad, comercios } from '../lib/comercios';
+
 const pinIcon = L.divIcon({
   className: 'custom-pin',
-  html: '<div style="font-size: 24px; line-height: 1;">📍</div>',
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
+  html: '<div style="font-size: 28px; line-height: 1;">📍</div>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
 });
 
-const MODALIDADES = [
-  'Todas',
-  'Misión Rescate',
-  'Consumo Local',
-  'Reto Cultural',
-  'Ruta Accesible',
-];
+const emojiPorCategoria: Record<string, string> = {
+  Panadería: '🥐',
+  Fonda: '🍲',
+  Cafetería: '☕',
+  Frutería: '🍉',
+};
 
 export default function Home() {
-  const [filtro, setFiltro] = useState('Todas');
+  const [filtro, setFiltro] = useState<string>('Todas');
 
   const comerciosFiltrados =
     filtro === 'Todas'
-      ? comerciosData
-      : comerciosData.filter((c) => c.modalidad === filtro);
+      ? comercios
+      : comercios.filter((comercio) => comercio.modalidad === filtro);
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '16px', fontFamily: 'sans-serif' }}>
-      <h2>🏠 Rutas Locales en Cancún</h2>
-      <p style={{ color: '#555' }}>
-        Elige un comercio cercano, visita el local y escanea su QR para desbloquear tu sello y beneficio.
-      </p>
+    <div className="pl-page">
+      <div className="pl-page-header">
+        <span className="pl-kicker">🗺️ Explora tu ciudad</span>
+        <h2>¡Rutas locales en Cancún! 🎉</h2>
+        <p>
+          Elige un comercio cercano, visita el local y escanea su QR para
+          desbloquear tu sello cultural y una recompensa ¡puro estilo local!
+        </p>
+      </div>
 
-      {/* Filtros por modalidad */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+      <div className="pl-filters" role="group" aria-label="Filtrar por modalidad">
         {MODALIDADES.map((mod) => (
           <button
             key={mod}
+            type="button"
             onClick={() => setFiltro(mod)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 20,
-              border: '1px solid #ccc',
-              cursor: 'pointer',
-              background: filtro === mod ? '#1e293b' : '#f8fafc',
-              color: filtro === mod ? '#fff' : '#1e293b',
-              fontWeight: filtro === mod ? 'bold' : 'normal',
-            }}
+            className={`pl-chip${filtro === mod ? ' is-active' : ''}`}
+            aria-pressed={filtro === mod}
           >
             {mod}
           </button>
         ))}
       </div>
 
-      {/* Mapa interactivo con OpenStreetMap + Leaflet */}
-      <div style={{ height: 320, width: '100%', borderRadius: 12, overflow: 'hidden', marginBottom: 24, border: '1px solid #ddd' }}>
-        <MapContainer
-          center={[21.1619, -86.8276]}
-          zoom={13}
-          style={{ height: '100%', width: '100%' }}
-        >
+      <div className="pl-map-frame">
+        <span className="pl-map-label">📍 MAPA DE RUTAS</span>
+        <MapContainer center={[21.1619, -86.8276]} zoom={13}>
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {comerciosFiltrados.map((comercio) => (
-            <Marker key={comercio.id} position={[comercio.lat, comercio.lng]} icon={pinIcon}>
+            <Marker
+              key={comercio.id}
+              position={[comercio.lat, comercio.lng]}
+              icon={pinIcon}
+            >
               <Popup>
                 <strong>{comercio.nombre}</strong>
                 <br />
-                <span>{comercio.modalidad} • {comercio.horario}</span>
+                {comercio.modalidad} · {comercio.horario}
                 <br />
-                <small>{comercio.beneficio}</small>
+                🎁 {comercio.beneficio}
               </Popup>
             </Marker>
           ))}
         </MapContainer>
       </div>
 
-      {/* Lista de tarjetas de comercios */}
-      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+      <div className="pl-section-title">
+        <h3>{comerciosFiltrados.length} comercios por descubrir</h3>
+      </div>
+
+      <div className="pl-grid">
         {comerciosFiltrados.map((comercio) => (
-          <div
-            key={comercio.id}
-            style={{
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: 16,
-              background: '#fff',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 'bold',
-                padding: '3px 8px',
-                borderRadius: 12,
-                background: '#e0f2fe',
-                color: '#0369a1',
-              }}
-            >
+          <article className="pl-comercio-card" key={comercio.id}>
+            <span className={`pl-badge pl-badge--${colorModalidad(comercio.modalidad)}`}>
               {comercio.modalidad}
             </span>
-            <h3 style={{ margin: '10px 0 4px' }}>{comercio.nombre}</h3>
-            <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b' }}>
-              {comercio.zona} • 🕒 {comercio.horario} • Cupo: {comercio.cupoDiario}/día
+            <h3>
+              <span aria-hidden="true">
+                {emojiPorCategoria[comercio.categoria] ?? '🏪'}
+              </span>{' '}
+              {comercio.nombre}
+            </h3>
+            <p className="pl-comercio-meta">
+              📍 {comercio.zona} · 🕒 {comercio.horario} · 🎟️ {comercio.cupoDiario}/día
             </p>
-            <p style={{ fontSize: 14, margin: '8px 0' }}>{comercio.reto}</p>
-            <p style={{ fontSize: 14, fontWeight: 'bold', color: '#15803d', margin: '8px 0' }}>
-              🎁 {comercio.beneficio}
-            </p>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            <p className="pl-comercio-reto">{comercio.reto}</p>
+            <p className="pl-comercio-beneficio">🎁 {comercio.beneficio}</p>
+            <div className="pl-tags">
               {comercio.accesibilidad.map((tag) => (
-                <span
-                  key={tag}
-                  style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 6px', borderRadius: 6 }}
-                >
+                <span className="pl-tag" key={tag}>
                   ♿ {tag}
                 </span>
               ))}
             </div>
-          </div>
+            <div className="pl-card-actions">
+              <Link className="pl-btn pl-btn--sky pl-btn--sm" to={`/reto/${comercio.id}`}>
+                Ver reto →
+              </Link>
+              <Link
+                className="pl-btn pl-btn--yellow pl-btn--sm"
+                to={`/scanner?id=${comercio.id}`}
+              >
+                📷 Escanear
+              </Link>
+            </div>
+          </article>
         ))}
       </div>
     </div>

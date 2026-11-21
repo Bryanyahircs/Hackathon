@@ -1,70 +1,98 @@
-import { Routes, Route, NavLink } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { NavLink, Route, Routes } from 'react-router-dom';
 
-import Home from './pages/Home';
-import RetoDetalle from './pages/RetoDetalle';
-import Scanner from './pages/Scanner';
-import Album from './pages/Album';
-import PanelComercio from './pages/PanelComercio';
-import ValidarCodigo from './pages/ValidarCodigo';
+import './App.css';
 
-const linkStyle = ({ isActive }: { isActive: boolean }) => ({
-  color: isActive ? '#0f172a' : '#e2e8f0',
-  background: isActive ? '#38bdf8' : 'transparent',
-  textDecoration: 'none',
-  padding: '8px 14px',
-  borderRadius: '8px',
-  fontWeight: isActive ? 'bold' : '500',
-  fontSize: '14px',
-  transition: 'all 0.2s ease',
-});
+const Album = lazy(() => import('./pages/Album'));
+const Home = lazy(() => import('./pages/Home'));
+const PanelComercio = lazy(() => import('./pages/PanelComercio'));
+const RetoDetalle = lazy(() => import('./pages/RetoDetalle'));
+const Scanner = lazy(() => import('./pages/Scanner'));
+const ValidarCodigo = lazy(() => import('./pages/ValidarCodigo'));
 
-function App() {
+const enlaces = [
+  { to: '/', label: 'Inicio', icono: '🏠', end: true },
+  { to: '/scanner', label: 'Escanear QR', icono: '📷', end: false },
+  { to: '/album', label: 'Mi Álbum', icono: '🏅', end: false },
+  { to: '/comercio', label: 'Panel Comercio', icono: '🏪', end: false },
+];
+
+export default function App() {
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'sans-serif' }}>
-      <nav
-        style={{
-          background: '#0f172a',
-          padding: '12px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        }}
-      >
-        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px', letterSpacing: '0.5px' }}>
-          📍 PasoLocal
-        </div>
+    <div className="pl-app">
+      <header className="pl-header">
+        <div className="pl-header-inner">
+          <NavLink to="/" className="pl-brand" aria-label="PasoLocal, ir al inicio">
+            <span className="pl-brand-icon" aria-hidden="true">
+              📍
+            </span>
+            <span className="pl-brand-text">PasoLocal</span>
+          </NavLink>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <NavLink to="/" end style={linkStyle}>
-            🏠 Inicio
-          </NavLink>
-          <NavLink to="/scanner" style={linkStyle}>
-            📷 Escanear QR
-          </NavLink>
-          <NavLink to="/album" style={linkStyle}>
-            🏅 Mi Álbum
-          </NavLink>
-          <NavLink to="/comercio" style={linkStyle}>
-            🏪 Panel Comercio
-          </NavLink>
+          <nav className="pl-nav" aria-label="Navegación principal">
+            {enlaces.map(({ to, label, icono, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `pl-nav-link${isActive ? ' is-active' : ''}`
+                }
+              >
+                <span aria-hidden="true">{icono}</span> {label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-      </nav>
+      </header>
 
-      <main style={{ padding: '16px' }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/reto/:id" element={<RetoDetalle />} />
-          <Route path="/scanner" element={<Scanner />} />
-          <Route path="/album" element={<Album />} />
-          <Route path="/comercio" element={<PanelComercio />} />
-          <Route path="/comercio/validar" element={<ValidarCodigo />} />
-        </Routes>
+      <main className="pl-main">
+        <Suspense
+          fallback={
+            <div className="pl-cargando" role="status">
+              <span className="pl-cargando-spin" aria-hidden="true">
+                🎡
+              </span>
+              <p>Cargando diversión…</p>
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/reto/:id" element={<RetoDetalle />} />
+            <Route path="/scanner" element={<Scanner />} />
+            <Route path="/album" element={<Album />} />
+            <Route path="/comercio" element={<PanelComercio />} />
+            <Route path="/comercio/validar" element={<ValidarCodigo />} />
+            <Route path="*" element={<PaginaNoEncontrada />} />
+          </Routes>
+        </Suspense>
       </main>
+
+      <footer className="pl-footer">
+        <strong>✨ PasoLocal · Cancún, Quintana Roo</strong>
+        <p>
+          Comercios locales, retos culturales y sellos que cuentan historias.
+          Hecho con 💖 para la comunidad.
+        </p>
+      </footer>
     </div>
   );
 }
 
-export default App;
+function PaginaNoEncontrada() {
+  return (
+    <div className="pl-page pl-vacio">
+      <div style={{ fontSize: 72 }} aria-hidden="true">
+        🛸
+      </div>
+      <h2>¡Vaya! Página perdida</h2>
+      <p style={{ color: 'var(--muted)', fontWeight: 700 }}>
+        Esta ruta no existe en el mapa.
+      </p>
+      <NavLink to="/" className="pl-btn pl-btn--sky">
+        🏠 Volver al inicio
+      </NavLink>
+    </div>
+  );
+}

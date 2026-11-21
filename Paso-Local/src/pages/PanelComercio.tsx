@@ -1,113 +1,133 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import comerciosData from '../data/comercios.demo.json';
+import { Link } from 'react-router-dom';
+
+import { comercios } from '../lib/comercios';
 import { generarCodigoDelDia, getFechaUTC } from '../lib/hash';
 
 export default function PanelComercio() {
-  const [comercioId, setComercioId] = useState(comerciosData[0].id);
+  const [comercioId, setComercioId] = useState(comercios[0].id);
   const [codigoDia, setCodigoDia] = useState('');
   const [qrUrl, setQrUrl] = useState('');
   const [pausado, setPausado] = useState(false);
+  const [copiado, setCopiado] = useState(false);
 
   const comercioActual =
-    comerciosData.find((c) => c.id === comercioId) || comerciosData[0];
+    comercios.find((comercio) => comercio.id === comercioId) ?? comercios[0];
 
   useEffect(() => {
-    // 1. Calcula el código determinístico del día con SHA-256
-    generarCodigoDelDia(comercioActual.id, comercioActual.seed).then(setCodigoDia);
+    let activo = true;
 
-    // 2. Genera el QR con el ID del comercio
-    QRCode.toDataURL(comercioActual.id, { width: 220, margin: 2 }).then(setQrUrl);
+    void generarCodigoDelDia(comercioActual.id, comercioActual.seed).then((codigo) => {
+      if (activo) setCodigoDia(codigo);
+    });
+    void QRCode.toDataURL(comercioActual.id, { width: 260, margin: 2 }).then((url) => {
+      if (activo) setQrUrl(url);
+    });
+
+    return () => {
+      activo = false;
+    };
   }, [comercioActual]);
 
+  const copiarCodigo = async () => {
+    try {
+      await navigator.clipboard.writeText(codigoDia);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1800);
+    } catch {
+      setCopiado(false);
+    }
+  };
+
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 16, fontFamily: 'sans-serif' }}>
-      <h2>🏪 Panel de Comercio</h2>
-      <p style={{ color: '#555' }}>
-        Valida cupones sin internet y descarga tu QR oficial para el mostrador.
-      </p>
-
-      {/* Selector de comercio */}
-      <label style={{ display: 'block', marginBottom: 16 }}>
-        <strong>Selecciona tu negocio:</strong>
-        <select
-          value={comercioId}
-          onChange={(e) => setComercioId(e.target.value)}
-          style={{ display: 'block', width: '100%', padding: 8, marginTop: 6, borderRadius: 8 }}
-        >
-          {comerciosData.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre} ({c.modalidad})
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {/* Tarjeta con código del día y QR */}
-      <div
-        style={{
-          border: '1px solid #cbd5e1',
-          borderRadius: 12,
-          padding: 20,
-          textAlign: 'center',
-          background: pausado ? '#f1f5f9' : '#fff',
-          opacity: pausado ? 0.7 : 1,
-        }}
-      >
-        <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
-          Código vigente hoy ({getFechaUTC()} UTC)
+    <div className="pl-page">
+      <div className="pl-page-header">
+        <span className="pl-kicker" style={{ background: 'var(--yellow)' }}>
+          🏪 Modo comercio
+        </span>
+        <h2>Panel de comercio</h2>
+        <p>
+          Genera tu QR oficial para el mostrador y valida los códigos del día sin
+          necesidad de conexión a un servidor.
         </p>
-        <div
-          style={{
-            fontSize: 36,
-            fontWeight: 'bold',
-            letterSpacing: 6,
-            margin: '10px 0 16px',
-            color: '#0f172a',
-          }}
-        >
-          {codigoDia || '------'}
-        </div>
+      </div>
 
-        {qrUrl && (
-          <div style={{ margin: '16px 0' }}>
-            <img src={qrUrl} alt={`QR de ${comercioActual.nombre}`} style={{ borderRadius: 8 }} />
-            <br />
-            <a
-              href={qrUrl}
-              download={`QR-${comercioActual.id}.png`}
-              style={{
-                display: 'inline-block',
-                marginTop: 8,
-                padding: '8px 14px',
-                background: '#2563eb',
-                color: '#fff',
-                borderRadius: 8,
-                textDecoration: 'none',
-                fontSize: 14,
-              }}
+      <div className="pl-panel-layout">
+        <section className="pl-card">
+          <label className="pl-label" htmlFor="selector-comercio">
+            <span> Selecciona tu negocio:</span>
+            <select
+              id="selector-comercio"
+              className="pl-select"
+              value={comercioId}
+              onChange={(evento) => setComercioId(evento.target.value)}
             >
-              ⬇️ Descargar QR para imprimir
-            </a>
+              {comercios.map((comercio) => (
+                <option key={comercio.id} value={comercio.id}>
+                  {comercio.nombre} ({comercio.modalidad})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="pl-alert pl-alert--info">
+            📅 Código vigente hoy ({getFechaUTC()} UTC). Se renueva automáticamente
+            cada día a medianoche.
           </div>
-        )}
 
-        <hr style={{ margin: '20px 0', borderColor: '#e2e8f0' }} />
+          <div className="pl-reto-lista" style={{ marginTop: 18 }}>
+            <li>🖨️ Imprime el QR y ponlo en tu mostrador.</li>
+            <li>🔎 El visitante lo escanea y obtiene un código.</li>
+            <li>✅ Confirma el código en la pantalla de validación.</li>
+          </div>
 
-        <button
-          onClick={() => setPausado(!pausado)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: 'none',
-            cursor: 'pointer',
-            background: pausado ? '#16a34a' : '#dc2626',
-            color: '#fff',
-            fontWeight: 'bold',
-          }}
-        >
-          {pausado ? '▶️ Reanudar participación' : '⏸️ Pausar participación hoy'}
-        </button>
+          <Link to="/comercio/validar" className="pl-btn pl-btn--cyan pl-btn--block" style={{ marginTop: 18 }}>
+            ✔️ Ir a validar un código
+          </Link>
+        </section>
+
+        <section className={`pl-card pl-qr-card${pausado ? ' is-pausado' : ''}`}>
+          <span className="pl-badge pl-badge--orange">QR OFICIAL DEL DÍA</span>
+          <h3 style={{ marginTop: 12 }}>{comercioActual.nombre}</h3>
+
+          <div className="pl-code pl-codigo-dia">{codigoDia || '······'}</div>
+
+          {qrUrl && (
+            <div>
+              <img
+                className="pl-qr-img"
+                src={qrUrl}
+                alt={`Código QR de ${comercioActual.nombre}`}
+              />
+              <a
+                className="pl-btn pl-btn--yellow pl-btn--block"
+                href={qrUrl}
+                download={`QR-${comercioActual.id}.png`}
+              >
+                ⬇️ Descargar QR para imprimir
+              </a>
+            </div>
+          )}
+
+          <div className="pl-panel-acciones">
+            <button type="button" className="pl-btn pl-btn--cyan pl-btn--block" onClick={copiarCodigo}>
+              {copiado ? '¡Copiado! 🎉' : '📋 Copiar código del día'}
+            </button>
+            <button
+              type="button"
+              className={`pl-btn pl-btn--block ${pausado ? 'pl-btn--yellow' : 'pl-btn--orange'}`}
+              onClick={() => setPausado(!pausado)}
+            >
+              {pausado ? '▶️ Reanudar participación' : '⏸️ Pausar participación hoy'}
+            </button>
+          </div>
+          {pausado && (
+            <p style={{ marginTop: 12, fontWeight: 800, color: 'var(--muted)' }}>
+              ⚠️ Participación en pausa para esta demo.
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );

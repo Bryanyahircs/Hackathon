@@ -1,106 +1,105 @@
 import { useState } from 'react';
-import comerciosData from '../data/comercios.demo.json';
-import { obtenerSellos } from '../lib/storage';
+import { Link } from 'react-router-dom';
+
+import { colorModalidad, comercios } from '../lib/comercios';
+import { obtenerSellos, reiniciarProgreso } from '../lib/storage';
 
 export default function Album() {
-  const [sellos, setSellos] = useState(() => obtenerSellos());
+  const [sellos, setSellos] = useState(obtenerSellos);
 
-  const totalComercios = comerciosData.length;
+  const totalComercios = comercios.length;
   const totalDesbloqueados = sellos.length;
   const porcentaje = Math.round((totalDesbloqueados / totalComercios) * 100);
 
   const reiniciarDemo = () => {
-    localStorage.removeItem('pasolocal_sellos');
-    localStorage.removeItem('pasolocal_canjes');
+    reiniciarProgreso();
     setSellos([]);
   };
 
   return (
-    <div style={{ maxWidth: 850, margin: '0 auto', padding: 16, fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+    <div className="pl-page">
+      <div className="pl-album-toolbar">
         <div>
-          <h2 style={{ margin: 0 }}>🏅 Mi Álbum de Sellos</h2>
-          <p style={{ color: '#555', margin: '4px 0 0' }}>
-            Progreso guardado solo en tu dispositivo (sin cuentas ni registro).
+          <span className="pl-kicker">🏅 Tu colección</span>
+          <h2>¡Mi álbum de sellos!</h2>
+          <p style={{ color: 'var(--muted)', fontWeight: 700, marginTop: 6 }}>
+            Tu progreso se guarda solo en este dispositivo. Sin cuentas ni registros.
           </p>
         </div>
-
         {totalDesbloqueados > 0 && (
-          <button
-            onClick={reiniciarDemo}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 8,
-              border: '1px solid #cbd5e1',
-              background: '#fff',
-              cursor: 'pointer',
-              fontSize: 12,
-              color: '#64748b',
-            }}
-          >
+          <button type="button" className="pl-btn pl-btn--sm" onClick={reiniciarDemo}>
             🗑️ Reiniciar demo
           </button>
         )}
       </div>
 
-      {/* Barra de progreso */}
-      <div style={{ margin: '18px 0 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
-          <strong>Sellos coleccionados: {totalDesbloqueados} de {totalComercios}</strong>
+      <div className="pl-progreso">
+        <div className="pl-progreso-info">
+          <span>🔥 Llevas {totalDesbloqueados} de {totalComercios} sellos</span>
           <span>{porcentaje}%</span>
         </div>
-        <div style={{ height: 12, background: '#e2e8f0', borderRadius: 99, overflow: 'hidden' }}>
-          <div
-            style={{
-              width: `${porcentaje}%`,
-              height: '100%',
-              background: '#16a34a',
-              transition: 'width 0.3s ease',
-            }}
-          />
+        <div
+          className="pl-barra"
+          role="progressbar"
+          aria-valuenow={porcentaje}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Progreso del álbum"
+        >
+          <div className="pl-barra-relleno" style={{ width: `${porcentaje}%` }} />
         </div>
       </div>
 
-      {/* Cuadrícula de sellos */}
-      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
-        {comerciosData.map((comercio) => {
-          const registro = sellos.find((s) => s.idComercio === comercio.id);
+      {totalDesbloqueados === 0 && (
+        <div className="pl-alert pl-alert--info" style={{ marginBottom: 22 }}>
+          👋 ¡Tu álbum está esperando! Escanea el QR de un comercio para coleccionar tu primer sello.
+        </div>
+      )}
+
+      <div className="pl-grid">
+        {comercios.map((comercio) => {
+          const registro = sellos.find((sello) => sello.idComercio === comercio.id);
           const desbloqueado = Boolean(registro);
 
           return (
-            <div
+            <article
+              className={`pl-sello-card${desbloqueado ? '' : ' is-bloqueado'}`}
               key={comercio.id}
-              style={{
-                border: desbloqueado ? '2px solid #16a34a' : '1px dashed #cbd5e1',
-                borderRadius: 12,
-                padding: 16,
-                background: desbloqueado ? '#fff' : '#f8fafc',
-                opacity: desbloqueado ? 1 : 0.65,
-              }}
             >
-              <div style={{ fontSize: 28, marginBottom: 6 }}>
+              <div className="pl-sello-icono" aria-hidden="true">
                 {desbloqueado ? '🏅' : '🔒'}
               </div>
-              <h3 style={{ margin: '0 0 4px' }}>{comercio.nombre}</h3>
-              <p style={{ margin: '0 0 10px', fontSize: 12, color: '#64748b' }}>
-                {comercio.zona} • {comercio.modalidad}
-              </p>
+              <span className={`pl-badge pl-badge--${colorModalidad(comercio.modalidad)}`}>
+                {comercio.modalidad}
+              </span>
+              <h3>{comercio.nombre}</h3>
+              <small>
+                📍 {comercio.zona} · {comercio.categoria}
+              </small>
 
               {desbloqueado ? (
                 <>
-                  <p style={{ fontSize: 13, color: '#334155', margin: '0 0 8px' }}>
-                    <strong>📖 Historia:</strong> {comercio.historia}
+                  <p style={{ fontSize: '0.88rem', lineHeight: 1.5, marginTop: 4 }}>
+                    <strong>📖 {comercio.historia}</strong>
                   </p>
-                  <small style={{ color: '#15803d', fontWeight: 'bold' }}>
-                    Desbloqueado el {registro?.fechaDesbloqueo}
+                  <small style={{ color: 'var(--sky-deep)' }}>
+                    ✅ Desbloqueado el {registro?.fechaDesbloqueo}
                   </small>
                 </>
               ) : (
-                <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
-                  Visita este comercio y escanea su QR para desbloquear su cápsula histórica.
-                </p>
+                <>
+                  <p style={{ fontSize: '0.88rem', lineHeight: 1.5, marginTop: 4, color: 'var(--muted)' }}>
+                    Visita el local y escanea su QR para descubrir su historia.
+                  </p>
+                  <Link
+                    className="pl-btn pl-btn--sm pl-btn--yellow"
+                    to={`/scanner?id=${comercio.id}`}
+                  >
+                    📷 Ir a escanear
+                  </Link>
+                </>
               )}
-            </div>
+            </article>
           );
         })}
       </div>

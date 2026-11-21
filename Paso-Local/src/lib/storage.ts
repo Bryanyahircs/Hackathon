@@ -8,61 +8,48 @@ export interface RegistroSello {
   fechaDesbloqueo: string;
 }
 
-/**
- * Obtiene todos los sellos desbloqueados en el dispositivo.
- */
-export function obtenerSellos(): RegistroSello[] {
-  const raw = localStorage.getItem(KEY_SELLOS);
-  if (!raw) return [];
+function leerJSON<T>(clave: string, valorPorDefecto: T): T {
   try {
-    return JSON.parse(raw) as RegistroSello[];
+    const raw = localStorage.getItem(clave);
+    return raw ? (JSON.parse(raw) as T) : valorPorDefecto;
   } catch {
-    return [];
+    return valorPorDefecto;
   }
 }
 
-/**
- * Guarda un sello si el usuario aún no lo tiene en su álbum.
- */
+/** Obtiene todos los sellos desbloqueados en el dispositivo. */
+export function obtenerSellos(): RegistroSello[] {
+  const sellos = leerJSON<RegistroSello[]>(KEY_SELLOS, []);
+  return Array.isArray(sellos) ? sellos : [];
+}
+
+/** Guarda un sello si el usuario aún no lo tiene en su álbum. */
 export function guardarSello(idComercio: string): boolean {
   const sellos = obtenerSellos();
-  const yaExiste = sellos.some((s) => s.idComercio === idComercio);
-
-  if (!yaExiste) {
-    sellos.push({
-      idComercio,
-      fechaDesbloqueo: getFechaUTC(),
-    });
-    localStorage.setItem(KEY_SELLOS, JSON.stringify(sellos));
-    return true;
-  }
-  return false;
-}
-
-/**
- * Verifica si el dispositivo ya canjeó en este comercio hoy.
- */
-export function yaCanjeoHoy(idComercio: string): boolean {
-  const hoy = getFechaUTC();
-  const raw = localStorage.getItem(KEY_CANJES);
-  if (!raw) return false;
-
-  try {
-    const canjes = JSON.parse(raw) as Record<string, string>;
-    return canjes[idComercio] === hoy;
-  } catch {
+  if (sellos.some((sello) => sello.idComercio === idComercio)) {
     return false;
   }
+
+  sellos.push({ idComercio, fechaDesbloqueo: getFechaUTC() });
+  localStorage.setItem(KEY_SELLOS, JSON.stringify(sellos));
+  return true;
 }
 
-/**
- * Registra el canje del día para evitar doble uso en el mismo dispositivo.
- */
-export function registrarCanjeHoy(idComercio: string): void {
-  const hoy = getFechaUTC();
-  const raw = localStorage.getItem(KEY_CANJES);
-  const canjes: Record<string, string> = raw ? JSON.parse(raw) : {};
+/** Verifica si el dispositivo ya canjeó en este comercio hoy. */
+export function yaCanjeoHoy(idComercio: string): boolean {
+  const canjes = leerJSON<Record<string, string>>(KEY_CANJES, {});
+  return canjes[idComercio] === getFechaUTC();
+}
 
-  canjes[idComercio] = hoy;
+/** Registra el canje del día para evitar doble uso en el mismo dispositivo. */
+export function registrarCanjeHoy(idComercio: string): void {
+  const canjes = leerJSON<Record<string, string>>(KEY_CANJES, {});
+  canjes[idComercio] = getFechaUTC();
   localStorage.setItem(KEY_CANJES, JSON.stringify(canjes));
+}
+
+/** Borra todo el progreso guardado (útil para la demo). */
+export function reiniciarProgreso(): void {
+  localStorage.removeItem(KEY_SELLOS);
+  localStorage.removeItem(KEY_CANJES);
 }
