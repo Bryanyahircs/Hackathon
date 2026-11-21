@@ -54,17 +54,21 @@
   color: #fff;
 }
 
-.pl-brand-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
+.pl-brand-logo {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
   background: var(--yellow);
   border: var(--borde);
   border-radius: 14px;
   box-shadow: 3px 3px 0 var(--ink);
-  font-size: 22px;
   transform: rotate(-8deg);
+  transition: transform 0.18s ease;
+}
+
+.pl-brand:hover .pl-brand-logo {
+  transform: rotate(4deg) scale(1.06);
 }
 
 .pl-brand-text {

@@ -23,9 +23,7 @@ export default function App() {
       <header className="pl-header">
         <div className="pl-header-inner">
           <NavLink to="/" className="pl-brand" aria-label="PasoLocal, ir al inicio">
-            <span className="pl-brand-icon" aria-hidden="true">
-              📍
-            </span>
+            <img className="pl-brand-logo" src="/logo.jpg" alt="Logo de PasoLocal" />
             <span className="pl-brand-text">PasoLocal</span>
           </NavLink>
 
