@@ -686,6 +686,240 @@
   margin-top: 18px;
 }
 
+/* ---------- Misiones con Google Places ---------- */
+
+.pl-misiones-controles {
+  display: grid;
+  gap: 10px;
+}
+
+.pl-misiones-opciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pl-misiones-opciones .pl-filters {
+  flex: 1;
+  margin: 0;
+}
+
+.pl-misiones-centro {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pl-rango-map {
+  height: 300px;
+}
+
+.pl-lugar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px;
+  background: var(--paper);
+  border: var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.pl-lugar-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 var(--ink);
+}
+
+.pl-lugar-card.is-seleccionado {
+  outline: 4px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.pl-lugar-foto {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+}
+
+.pl-lugar-cabecera {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pl-lugar-titulo {
+  font-size: 1.2rem;
+}
+
+.pl-lugar-meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pl-lugar-resena {
+  padding-left: 10px;
+  border-left: 3px solid var(--orange);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.pl-lugar-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.pl-mision-detalle {
+  background: #fffdf6;
+}
+
+.pl-misiones-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.pl-mision-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--sombra-sm);
+}
+
+.pl-mision-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pl-mision-item p {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.pl-mision-categoria {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.pl-misiones-guardadas-lista {
+  display: grid;
+  gap: 8px;
+}
+
+.pl-mision-guardada {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--cream);
+}
+
+.pl-mision-guardada > span {
+  font-size: 24px;
+}
+
+.pl-mision-guardada > div {
+  display: grid;
+  flex: 1;
+}
+
+.pl-mision-guardada small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* ---------- Datos de Google Places ---------- */
+
+.pl-comercio-foto {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.pl-google {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: #eaf9ff;
+}
+
+.pl-google-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pl-google-rating {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pl-google-rating small {
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.75rem;
+}
+
+.pl-google a {
+  color: var(--sky-deep);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.pl-google-direccion {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pl-google-resena {
+  margin: 4px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--orange);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+.pl-google-resena small {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.pl-google-atribucion {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.pl-google--compacto {
+  padding: 10px;
+}
+
+.pl-google--compacto .pl-google-direccion {
+  display: none;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 860px) {
@@ -726,6 +960,10 @@
     padding: 9px 6px;
     font-size: 0.82rem;
     white-space: nowrap;
+  }
+
+  .pl-nav-link:last-child:nth-child(odd) {
+    grid-column: span 2;
   }
 
   .pl-main {
@@ -773,6 +1011,14 @@
 
   .pl-footer p {
     font-size: 0.8rem;
+  }
+
+  .pl-misiones-opciones .pl-filters {
+    width: 100%;
+  }
+
+  .pl-rango-map {
+    height: 240px;
   }
 }
 

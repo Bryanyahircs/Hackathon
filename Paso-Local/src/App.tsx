@@ -5,6 +5,7 @@ import './App.css';
 
 const Album = lazy(() => import('./pages/Album'));
 const Home = lazy(() => import('./pages/Home'));
+const Misiones = lazy(() => import('./pages/Misiones'));
 const PanelComercio = lazy(() => import('./pages/PanelComercio'));
 const RetoDetalle = lazy(() => import('./pages/RetoDetalle'));
 const Scanner = lazy(() => import('./pages/Scanner'));
@@ -12,6 +13,7 @@ const ValidarCodigo = lazy(() => import('./pages/ValidarCodigo'));
 
 const enlaces = [
   { to: '/', label: 'Inicio', icono: '🏠', end: true },
+  { to: '/misiones', label: 'Misiones', icono: '🧭', end: false },
   { to: '/scanner', label: 'Escanear QR', icono: '📷', end: false },
   { to: '/album', label: 'Mi Álbum', icono: '🏅', end: false },
   { to: '/comercio', label: 'Panel Comercio', icono: '🏪', end: false },
@@ -58,6 +60,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/reto/:id" element={<RetoDetalle />} />
+            <Route path="/misiones" element={<Misiones />} />
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/album" element={<Album />} />
             <Route path="/comercio" element={<PanelComercio />} />

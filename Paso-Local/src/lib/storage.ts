@@ -2,10 +2,21 @@ import { getFechaUTC } from './hash';
 
 const KEY_SELLOS = 'pasolocal_sellos';
 const KEY_CANJES = 'pasolocal_canjes';
+const KEY_MISIONES = 'pasolocal_misiones';
 
 export interface RegistroSello {
   idComercio: string;
   fechaDesbloqueo: string;
+}
+
+export interface MisionGuardada {
+  id: string;
+  lugarId: string;
+  lugarNombre: string;
+  titulo: string;
+  icono: string;
+  puntos: number;
+  fecha: string;
 }
 
 function leerJSON<T>(clave: string, valorPorDefecto: T): T {
@@ -48,8 +59,31 @@ export function registrarCanjeHoy(idComercio: string): void {
   localStorage.setItem(KEY_CANJES, JSON.stringify(canjes));
 }
 
+/** Devuelve las misiones aceptadas guardadas en el dispositivo. */
+export function obtenerMisionesGuardadas(): MisionGuardada[] {
+  const misiones = leerJSON<MisionGuardada[]>(KEY_MISIONES, []);
+  return Array.isArray(misiones) ? misiones : [];
+}
+
+/** Guarda una misión aceptada (evita duplicados). */
+export function guardarMision(mision: MisionGuardada): boolean {
+  const misiones = obtenerMisionesGuardadas();
+  if (misiones.some((item) => item.id === mision.id)) return false;
+
+  misiones.unshift(mision);
+  localStorage.setItem(KEY_MISIONES, JSON.stringify(misiones));
+  return true;
+}
+
+/** Quita una misión de la lista guardada. */
+export function eliminarMision(id: string): void {
+  const misiones = obtenerMisionesGuardadas().filter((item) => item.id !== id);
+  localStorage.setItem(KEY_MISIONES, JSON.stringify(misiones));
+}
+
 /** Borra todo el progreso guardado (útil para la demo). */
 export function reiniciarProgreso(): void {
   localStorage.removeItem(KEY_SELLOS);
   localStorage.removeItem(KEY_CANJES);
+  localStorage.removeItem(KEY_MISIONES);
 }

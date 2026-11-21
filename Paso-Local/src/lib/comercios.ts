@@ -15,6 +15,8 @@ export interface Comercio {
   accesibilidad: string[];
   historia: string;
   seed: string;
+  /** ID de Google Places. Si se deja vacío se busca el negocio por nombre. */
+  placeId?: string;
 }
 
 export const comercios: Comercio[] = datos as Comercio[];

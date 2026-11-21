@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import MapaGoogle from '../components/MapaGoogle';
+import ResumenGoogle from '../components/ResumenGoogle';
+import { useDatosGoogle } from '../hooks/useDatosGoogle';
 import { MODALIDADES, colorModalidad, comercios } from '../lib/comercios';
+import { tieneGoogleMaps } from '../lib/googleMaps';
 
 const pinIcon = L.divIcon({
   className: 'custom-pin',
@@ -23,10 +27,19 @@ const emojiPorCategoria: Record<string, string> = {
 export default function Home() {
   const [filtro, setFiltro] = useState<string>('Todas');
 
-  const comerciosFiltrados =
-    filtro === 'Todas'
-      ? comercios
-      : comercios.filter((comercio) => comercio.modalidad === filtro);
+  const comerciosFiltrados = useMemo(
+    () =>
+      filtro === 'Todas'
+        ? comercios
+        : comercios.filter((comercio) => comercio.modalidad === filtro),
+    [filtro]
+  );
+
+  const idsClave = useMemo(
+    () => comerciosFiltrados.map((comercio) => comercio.id).join('|'),
+    [comerciosFiltrados]
+  );
+  const datosGoogle = useDatosGoogle(idsClave);
 
   return (
     <div className="pl-page">
@@ -38,6 +51,14 @@ export default function Home() {
           desbloquear tu sello cultural y una recompensa ¡puro estilo local!
         </p>
       </div>
+
+      {!tieneGoogleMaps && (
+        <div className="pl-alert pl-alert--info" style={{ marginBottom: 20 }}>
+          💡 Mapa en modo demo (OpenStreetMap). Para usar Google Maps con reseñas
+          y valoraciones reales, copia <code>.env.example</code> a{' '}
+          <code>.env.local</code> y agrega tu clave API.
+        </div>
+      )}
 
       <div className="pl-filters" role="group" aria-label="Filtrar por modalidad">
         {MODALIDADES.map((mod) => (
@@ -54,28 +75,33 @@ export default function Home() {
       </div>
 
       <div className="pl-map-frame">
-        <span className="pl-map-label">📍 MAPA DE RUTAS</span>
-        <MapContainer center={[21.1619, -86.8276]} zoom={13}>
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {comerciosFiltrados.map((comercio) => (
-            <Marker
-              key={comercio.id}
-              position={[comercio.lat, comercio.lng]}
-              icon={pinIcon}
-            >
-              <Popup>
-                <strong>{comercio.nombre}</strong>
-                <br />
-                {comercio.modalidad} · {comercio.horario}
-                <br />
-                🎁 {comercio.beneficio}
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        <span className="pl-map-label">
+          {tieneGoogleMaps ? '📍 GOOGLE MAPS' : '📍 MAPA DE RUTAS'}
+        </span>
+        {tieneGoogleMaps ? (
+          <MapaGoogle comercios={comerciosFiltrados} datos={datosGoogle} />
+        ) : (
+          <MapContainer center={[21.1619, -86.8276]} zoom={13}>
+            <TileLayer
+              attribution="&copy; OpenStreetMap contributors"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {comerciosFiltrados.map((comercio) => (
+              <Marker
+                key={comercio.id}
+                position={[comercio.lat, comercio.lng]}
+                icon={pinIcon}
+              >
+                <Popup>
+                  <strong>{comercio.nombre}</strong>
+                  <br />
+                  {comercio.modalidad} · {comercio.horario}
+                  <br />🎁 {comercio.beneficio}
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        )}
       </div>
 
       <div className="pl-section-title">
@@ -83,42 +109,55 @@ export default function Home() {
       </div>
 
       <div className="pl-grid">
-        {comerciosFiltrados.map((comercio) => (
-          <article className="pl-comercio-card" key={comercio.id}>
-            <span className={`pl-badge pl-badge--${colorModalidad(comercio.modalidad)}`}>
-              {comercio.modalidad}
-            </span>
-            <h3>
-              <span aria-hidden="true">
-                {emojiPorCategoria[comercio.categoria] ?? '🏪'}
-              </span>{' '}
-              {comercio.nombre}
-            </h3>
-            <p className="pl-comercio-meta">
-              📍 {comercio.zona} · 🕒 {comercio.horario} · 🎟️ {comercio.cupoDiario}/día
-            </p>
-            <p className="pl-comercio-reto">{comercio.reto}</p>
-            <p className="pl-comercio-beneficio">🎁 {comercio.beneficio}</p>
-            <div className="pl-tags">
-              {comercio.accesibilidad.map((tag) => (
-                <span className="pl-tag" key={tag}>
-                  ♿ {tag}
-                </span>
-              ))}
-            </div>
-            <div className="pl-card-actions">
-              <Link className="pl-btn pl-btn--sky pl-btn--sm" to={`/reto/${comercio.id}`}>
-                Ver reto →
-              </Link>
-              <Link
-                className="pl-btn pl-btn--yellow pl-btn--sm"
-                to={`/scanner?id=${comercio.id}`}
-              >
-                📷 Escanear
-              </Link>
-            </div>
-          </article>
-        ))}
+        {comerciosFiltrados.map((comercio) => {
+          const dato = datosGoogle[comercio.id];
+
+          return (
+            <article className="pl-comercio-card" key={comercio.id}>
+              {dato?.fotoUrl && (
+                <img
+                  className="pl-comercio-foto"
+                  src={dato.fotoUrl}
+                  alt={`Foto de ${dato?.nombre ?? comercio.nombre}`}
+                  loading="lazy"
+                />
+              )}
+              <span className={`pl-badge pl-badge--${colorModalidad(comercio.modalidad)}`}>
+                {comercio.modalidad}
+              </span>
+              <h3>
+                <span aria-hidden="true">
+                  {emojiPorCategoria[comercio.categoria] ?? '🏪'}
+                </span>{' '}
+                {dato?.nombre ?? comercio.nombre}
+              </h3>
+              <p className="pl-comercio-meta">
+                📍 {comercio.zona} · 🕒 {comercio.horario} · 🎟️ {comercio.cupoDiario}/día
+              </p>
+              <p className="pl-comercio-reto">{comercio.reto}</p>
+              <p className="pl-comercio-beneficio">🎁 {comercio.beneficio}</p>
+              {dato && <ResumenGoogle dato={dato} compacto />}
+              <div className="pl-tags">
+                {comercio.accesibilidad.map((tag) => (
+                  <span className="pl-tag" key={tag}>
+                    ♿ {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="pl-card-actions">
+                <Link className="pl-btn pl-btn--sky pl-btn--sm" to={`/reto/${comercio.id}`}>
+                  Ver reto →
+                </Link>
+                <Link
+                  className="pl-btn pl-btn--yellow pl-btn--sm"
+                  to={`/scanner?id=${comercio.id}`}
+                >
+                  📷 Escanear
+                </Link>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

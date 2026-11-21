@@ -1,10 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
 
+import ResumenGoogle from '../components/ResumenGoogle';
+import { useDatosGoogle } from '../hooks/useDatosGoogle';
 import { buscarComercio, colorModalidad } from '../lib/comercios';
 
 export default function RetoDetalle() {
   const { id } = useParams();
   const comercio = buscarComercio(id);
+  const datosGoogle = useDatosGoogle(id ?? '');
 
   if (!comercio) {
     return (
@@ -37,12 +40,20 @@ export default function RetoDetalle() {
           <span className={`pl-badge pl-badge--${colorModalidad(comercio.modalidad)}`}>
             {comercio.modalidad}
           </span>
-          <h2 style={{ marginTop: 8 }}>{comercio.nombre}</h2>
+          <h2 style={{ marginTop: 8 }}>
+            {datosGoogle[id ?? '']?.nombre ?? comercio.nombre}
+          </h2>
           <p style={{ color: 'var(--muted)', fontWeight: 800, marginTop: 6 }}>
             📍 {comercio.zona} · 🕒 {comercio.horario} · {comercio.categoria}
           </p>
         </div>
       </div>
+
+      {datosGoogle[id ?? ''] && (
+        <div className="pl-card" style={{ marginBottom: 20 }}>
+          <ResumenGoogle dato={datosGoogle[id ?? '']} />
+        </div>
+      )}
 
       <div className="pl-reto-panel">
         <section className="pl-card">
